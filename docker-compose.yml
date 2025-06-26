@@ -39,5 +39,9 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  dummy-docker:
+    image: httpd
+    container_name: dummy-docker
+
 volumes:
   db_data:
