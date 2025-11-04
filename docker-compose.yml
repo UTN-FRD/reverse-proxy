@@ -1,33 +1,6 @@
-version: '3.8'
+version: "3"
 
 services:
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: phpmyadmin
-    restart: always
-    environment:
-      PMA_HOST: db
-    ports:
-      - "8085:80"  # Acceso directo (opcional)
-  
-  nginx-web:
-    image: nginx
-    container_name: web
-    volumes:
-      - ./web:/usr/share/nginx/html:ro
-    restart: always
-
-  proxy:
-    image: nginx
-    container_name: reverse-proxy
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - phpmyadmin
-      - nginx-web
-
   db:
     image: mysql
     restart: always
@@ -38,10 +11,52 @@ services:
       MYSQL_PASSWORD: lsi
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - npm_network
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+    networks:
+      - npm_network
+
+  nginx-web:
+    image: nginx
+    container_name: nginx-web
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    restart: always
+    networks:
+      - npm_network
 
   dummy-docker:
     image: httpd
     container_name: dummy-docker
+    networks:
+      - npm_network
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: always
+    ports:
+      - "80:80"
+      - "81:81"   # Panel de administración
+      - "443:443" # SSL
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    networks:
+      - npm_network
 
 volumes:
   db_data:
+  npm_data:
+  npm_letsencrypt:
+
+networks:
+  npm_network:
+    driver: bridge
